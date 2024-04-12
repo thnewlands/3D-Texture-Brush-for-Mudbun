@@ -94,7 +94,9 @@ Now, when you click the dropdown item "GameObject -> MudBun -> Custom -> SDF Tex
 
 [Unity's SDF Bake Tool](https://docs.unity3d.com/Packages/com.unity.visualeffectgraph@17.0/manual/sdf-bake-tool-window.html), built into their VFX Graph Package, works great for this. There are two things to remember: 
 1. Remember to make cube shaped textures with uniform scaling using fit cube to mesh.
+
 ![image](https://github.com/thnewlands/3D-Texture-Brush-for-Mudbun/assets/4378629/c99a0a2c-ff1a-4386-b38c-bbd57604b3f7)
+
 2. Make sure that SDFs are 128x128x128 in resolution.
 
 Once created you can drag the SDF into SDFTextureSolidBrush's Sdf Texture slot and if you did everything right it should just work! 
