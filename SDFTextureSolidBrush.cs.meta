@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: 2adc9f1c9c96b4c499ff3839da8feeb1
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - sdfTexture: {fileID: 11700000, guid: 6e163439b71632b4ba154d82f1ed6cb2, type: 2}
+  - collection: {fileID: 11400000, guid: d0b6f596d78349c49a1361da3e60698a, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

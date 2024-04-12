@@ -1,0 +1,12 @@
+#pragma kernel CSMain
+#include "HLSLSupport.cginc"
+
+RWTexture3D<float> _Result;
+Texture3D<float> _Source;
+float3 _Origin;
+
+[numthreads(8,8,8)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    _Result[id.xyz + _Origin] = _Source[id.xyz];//Largest texture takes smallest texture and translates it into a position
+}
