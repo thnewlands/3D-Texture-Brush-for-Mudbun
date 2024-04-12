@@ -6,7 +6,7 @@
 #define kSDFTextureSolid (960)
 //TODO: This is a large CGInclude used for "UNITY_DECLARE_TEX3D_FLOAT" 
 //      Could theoretically be reduced to a smaller snippet. 
-#include "UnityCG.cginc"
+#include "HLSLSupport.cginc"
 
 UNITY_DECLARE_TEX3D_FLOAT(_MudbunSDFTextures);
 
