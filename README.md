@@ -105,6 +105,10 @@ Once created you can drag the SDF into SDFTextureSolidBrush's Sdf Texture slot a
 1. Sometimes triangles disappear. 
 2. This works best with models that aren't pressed against the edges of the bounding box. Because things are packed together in a cube there's sometimes room for other textures to bleed in.
 
+**Unknown Issues**
+1. No idea if this works in builds! I've been using this for level editing.
+2. Yet unknown! 
+
 Please send pull requests if you make improvements! 
 
 Tested with Unity 2022.3.21f and Mudbun 1.5.47
