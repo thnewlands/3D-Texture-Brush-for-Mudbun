@@ -113,4 +113,4 @@ Please send pull requests if you make improvements!
 
 Tested with Unity 2022.3.21f and Mudbun 1.5.47
 
-When figuring out blending at a distance with bounded SDF textures I referenced EmmetOT's [Isomesh](https://github.com/EmmetOT/IsoMesh) and Kosmonaut's [very informative post](https://kosmonautblog.wordpress.com/2017/05/09/signed-distance-field-rendering-journey-pt-2/) on the subject. I also highly recommend giving [Mudbun](https://assetstore.unity.com/packages/tools/particles-effects/mudbun-volumetric-vfx-modeling-177891) a shot if you have the resources. 
+When figuring out blending at a distance with bounded SDF textures I referenced EmmetOT's [Isomesh](https://github.com/EmmetOT/IsoMesh) and Kosmonaut's [very informative post](https://kosmonautblog.wordpress.com/2017/05/09/signed-distance-field-rendering-journey-pt-2/) on the subject. I also highly recommend giving [Mudbun](https://assetstore.unity.com/packages/tools/particles-effects/mudbun-volumetric-vfx-modeling-177891) a shot. 
