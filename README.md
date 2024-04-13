@@ -65,7 +65,7 @@ float sdf_custom_brush
 
 3. This part is a huge hack that deals with a requirement for textures to be bound in compute shaders. I'm not happy with it and hope to fix in the future. Inside of MudRenderer's OnEnable() add:
 
-`      SDFTextureCollection.Instance.Init();`
+`SDFTextureCollection.Instance.Init();`
 
 This should look like: 
 ```
@@ -78,7 +78,7 @@ This should look like:
       SelectionManager.Init();
 #endif
     }
-	```
+```
 
 
 4. For ease of creation, add a dropdown item to CustomCreationMenu.
