@@ -10,7 +10,13 @@ This repository contains code for extending Long Bunny Labs's [MudBun](https://a
 
 2. Add the brush function to CustomBrush.cginc
 
-Inside of CustomBrush.cginc, inside of the switch statement for `brush.type` add:
+Inside of CustomBrush.cginc, just above the sdf_custom_brush function add:
+
+```
+#include "SDFTextureSolidBrush.cginc"
+```
+
+and inside of the switch statement for `brush.type` add:
 
 ```
 case kSDFTextureSolid:
@@ -20,11 +26,6 @@ case kSDFTextureSolid:
 }
 ```
 
-and just above the sdf_custom_brush function add:
-
-```
-#include "SDFTextureSolidBrush.cginc"
-```
 
 It should look something like this:
 
@@ -62,8 +63,25 @@ float sdf_custom_brush
 ...
 ```
 
+3. This part is a huge hack that deals with a requirement for textures to be bound in compute shaders. I'm not happy with it and hope to fix in the future. Inside of MudRenderer's OnEnable() add:
 
-3. For ease of creation, add a dropdown item to CustomCreationMenu.
+`      SDFTextureCollection.Instance.Init();`
+
+This should look like: 
+```
+    protected override void OnEnable()
+    {
+      base.OnEnable();
+      SDFTextureCollection.Instance.Init();
+#if UNITY_EDITOR
+      RegisterEditorEvents();
+      SelectionManager.Init();
+#endif
+    }
+	```
+
+
+4. For ease of creation, add a dropdown item to CustomCreationMenu.
 
 Inside of CustomCreationMenu.cs add:
 
@@ -78,7 +96,7 @@ Inside of CustomCreationMenu.cs add:
   }
 ```
 
-4. At this point you should be able to drag and drop a 3D Texture into the scene!
+5. At this point you should be able to drag and drop a 3D Texture into the scene!
 
 Now, when you click the dropdown item "GameObject -> MudBun -> Custom -> SDF Texture Solid" you should see Suzzane appear in your scene. If she doesn't, you probably are missing .meta files from this repo. 
 

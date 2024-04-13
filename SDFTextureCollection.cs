@@ -14,6 +14,35 @@ public class SDFTextureCollection : ScriptableObject
     public ComputeShader blitShader;
 
     private RenderTexture sdfArray;
+    private const string textureName = "_MudbunSDFTextures";
+
+
+    //TODO: This is a major hack added to handle an exception 
+    //      "Compute shader (MarchingCubes): Property (_MudbunSDFTextures) at kernel index (0) is not set"
+    //      On line 828 of MudRenderer in the OnEnable function I add "SDFTextureCollection.Instance.Init();"
+    //      This initializes the array in scenes including ones that don't utilize this brush type.
+    //      I'm not happy with this solution at the moment but it's better than nothing.
+    //      The main issue with it is that it adds a graphics memory overhead to scenes that don't need it.
+    //
+    //      I've looked into shader variants with keywords but haven't had much success.
+    //      I think part of the problem is nested CGIncludes and the other part is inconsistencies between frag / vert shader / compute shader code
+    private static SDFTextureCollection _instance;
+    public static SDFTextureCollection Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = Resources.Load<SDFTextureCollection>("SDFTextureCollection");
+                return _instance;
+            }
+            else
+            {
+                return _instance;
+            }
+        }
+    }
+
     public void Init(){
         RegisterShader();
     }
@@ -21,11 +50,10 @@ public class SDFTextureCollection : ScriptableObject
         if(sdfArray == null){
             InitTexArray();
         }
-        string label = "_MudbunSDFTextures";
-        if(!Shader.GetGlobalTexture(label)){
-            Debug.Log("Registered " + label);
+        if(!Shader.GetGlobalTexture(textureName)){
+            Debug.Log("Registered " + textureName);
         }
-        Shader.SetGlobalTexture(label, sdfArray);
+        Shader.SetGlobalTexture(textureName, sdfArray);
     }
 
     private void OnEnable(){
