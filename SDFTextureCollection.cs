@@ -76,7 +76,7 @@ public class SDFTextureCollection : ScriptableObject
         sdfTextures = new Texture3D[textureCount];
         usersPerHeightmap = new int[textureCount];
 
-        RenderTextureDescriptor d = new RenderTextureDescriptor(targetSize, targetSize, RenderTextureFormat.RFloat);
+        RenderTextureDescriptor d = new RenderTextureDescriptor(targetSize, targetSize, RenderTextureFormat.RHalf);
         d.useMipMap = true;
         d.autoGenerateMips = false;
         d.mipCount = 8;

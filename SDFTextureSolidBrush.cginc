@@ -8,7 +8,7 @@
 //      Could theoretically be reduced to a smaller snippet. 
 #include "HLSLSupport.cginc"
 
-UNITY_DECLARE_TEX3D_FLOAT(_MudbunSDFTextures);
+UNITY_DECLARE_TEX3D_HALF(_MudbunSDFTextures);
 
 float sample_sdf_tex3D_distance(float3 position, float3 boundsMin, float3 boundsMax)
 {
