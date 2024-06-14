@@ -25,7 +25,6 @@ namespace MudBun
 #endif
     public class SDFTextureSolidBrush : MudSolid
   {
-    #if UNITY_EDITOR
     // this value matches kCustomDistortion in CustomBrush.cginc
     public static readonly int TypeId = 960;
     private Texture3D lastSDFTexture;
@@ -115,7 +114,6 @@ namespace MudBun
     private void OnDestroy(){
         collection.UnregisterTexture(sdfTexture);
     }
-    #endif
   }
 }
 
