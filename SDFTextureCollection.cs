@@ -7,6 +7,9 @@ using System;
 using UnityEngine.SceneManagement;
 using Unity.Collections;
 using UnityEngine.Events;
+using Unity.Burst;
+
+
 [CreateAssetMenu(fileName = "Data", menuName = "ScriptableObjects/SDFTextureCollection", order = 1)]
 public class SDFTextureCollection : ScriptableObject
 {
@@ -18,6 +21,14 @@ public class SDFTextureCollection : ScriptableObject
     private RenderTexture sdfArray;
     private const string textureName = "_MudbunSDFTextures";
 
+    public static readonly SharedStatic<NativeArray<float>.ReadOnly> DataCache = SharedStatic<NativeArray<float>.ReadOnly>.GetOrCreate<SDFTextureCollection, DataCacheKey>();
+    private class DataCacheKey { }
+
+    public static readonly SharedStatic<int> MudbunSDFTextureResolution = SharedStatic<int>.GetOrCreate<SDFTextureCollection, MudbunSDFTextureResolutionKey>();
+    private class MudbunSDFTextureResolutionKey { }
+
+    public static readonly SharedStatic<int> MudbunSDFTexturesPerDimension = SharedStatic<int>.GetOrCreate<SDFTextureCollection, MudbunSDFTexturesPerDimensionKey>();
+    private class MudbunSDFTexturesPerDimensionKey { }
 
     public enum Dimension { _4x4x4 = 4, _3x3x3 = 3, _2x2x2 = 2, _1x1x1 = 1 };
     public enum Resolution { _512 = 512, _256 = 256, _128 = 128, _64 = 64, _32 = 32 };
@@ -72,9 +83,13 @@ public class SDFTextureCollection : ScriptableObject
         if(!Shader.GetGlobalTexture(textureName)){
             Debug.Log("Registered " + textureName);
         }
+
         Shader.SetGlobalTexture(textureName, sdfArray);
         Shader.SetGlobalFloat("_MudbunSDFTexturesPerDimension", (int)numberOfSDFPerDimension);
         Shader.SetGlobalFloat("_MudbunSDFTextureResolution", (int)resolutionPerSDF);
+
+        MudbunSDFTexturesPerDimension.Data = (int)numberOfSDFPerDimension;
+        MudbunSDFTextureResolution.Data = (int)resolutionPerSDF;
     }
 
     private void OnEnable(){
@@ -164,9 +179,29 @@ public class SDFTextureCollection : ScriptableObject
         {
             sdfArray.GenerateMips();
         }
+        UpdateDataCache();
     }
 
-    
+    private void UpdateDataCache()
+    {
+        List<float> builder = new List<float>();
+        float[] empty = new float[(int)resolutionPerSDF * (int)resolutionPerSDF * (int)resolutionPerSDF];
+        foreach (Texture3D texture in sdfTextures)
+        {
+            if(texture != null)
+            {
+                builder.Concat(texture.GetPixelData<float>(0));
+            }
+            else
+            {
+                builder.Concat(empty);
+            }
+        }
+        //TODO: This causes a memory leak
+        DataCache.Data = new NativeArray<float>(builder.ToArray(), Allocator.TempJob).AsReadOnly();
+        Debug.Log("Updated Data Cache, new Length: " + DataCache.Data.Length);
+    }
+
 
     public int RegisterTexture(Texture3D texture){
         RegisterShader();
@@ -216,6 +251,7 @@ public class SDFTextureCollection : ScriptableObject
                 sdfTextures[index] = null;
             }
         }
+        UpdateDataCache();
     }
 
     private void Dispose()
