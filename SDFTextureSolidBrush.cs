@@ -89,6 +89,13 @@ namespace MudBun
             brush.Data1 = collection.IndexToOrigin(index);
             brush.Data2 = transform.localScale;
             brush.Data3.x = index;
+
+            if (aBone != null)
+            {
+                brush.BoneIndex = aBone.Count;
+                aBone.Add(gameObject.transform);
+            }
+
             aBrush[iStart] = brush;
 
             return 1;
