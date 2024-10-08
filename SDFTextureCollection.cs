@@ -5,17 +5,27 @@ using UnityEngine.Rendering;
 using System.Linq;
 using System;
 using UnityEngine.SceneManagement;
+using Unity.Collections;
+using UnityEngine.Events;
 [CreateAssetMenu(fileName = "Data", menuName = "ScriptableObjects/SDFTextureCollection", order = 1)]
 public class SDFTextureCollection : ScriptableObject
 {
     private Texture3D[] sdfTextures;
-    private int[] usersPerHeightmap;
+    private int[] usersPerTexture;
 
     public ComputeShader blitShader;
+    public UnityEvent OnRegenerate;
 
     private RenderTexture sdfArray;
     private const string textureName = "_MudbunSDFTextures";
 
+
+    public enum Dimension { _4x4x4 = 4, _3x3x3 = 3, _2x2x2 = 2, _1x1x1 = 1 };
+    public enum Resolution { _512 = 512, _256 = 256, _128 = 128, _64 = 64, _32 = 32 };
+    public Resolution resolutionPerSDF = Resolution._128;
+    public Dimension numberOfSDFPerDimension = Dimension._4x4x4;
+
+    private bool useMipmaps = false;
 
     //TODO: This is a major hack added to handle an exception 
     //      "Compute shader (MarchingCubes): Property (_MudbunSDFTextures) at kernel index (0) is not set"
@@ -34,6 +44,7 @@ public class SDFTextureCollection : ScriptableObject
             if (_instance == null)
             {
                 _instance = Resources.Load<SDFTextureCollection>("SDFTextureCollection");
+                Debug.Log("Loaded instance " + _instance.name);
                 return _instance;
             }
             else
@@ -54,6 +65,8 @@ public class SDFTextureCollection : ScriptableObject
             Debug.Log("Registered " + textureName);
         }
         Shader.SetGlobalTexture(textureName, sdfArray);
+        Shader.SetGlobalFloat("_MudbunSDFTexturesPerDimension", (int)numberOfSDFPerDimension);
+        Shader.SetGlobalFloat("_MudbunSDFTextureResolution", (int)resolutionPerSDF);
     }
 
     private void OnEnable(){
@@ -64,20 +77,30 @@ public class SDFTextureCollection : ScriptableObject
         SceneManager.activeSceneChanged -= (x,y) => RegisterShader();
     }
     [ContextMenu("Reset Values")]
-    private void ResetValues(){
+    private void ResetValues()
+    {
         RegisterShader();
         InitTexArray();
     }
+
+    private int GetTextureSize()
+    {
+        return (int)resolutionPerSDF * (int)numberOfSDFPerDimension;
+    }
+
     private void InitTexArray(){
 
-        int targetSize = 512;
-        int textureCount = 64; // (512 / 128) cubed
+        //how big of a texture do you want 
+        //how many do you want
+
+        int targetSize = GetTextureSize();
+        int textureCount = (int)numberOfSDFPerDimension * (int)numberOfSDFPerDimension * (int)numberOfSDFPerDimension;
 
         sdfTextures = new Texture3D[textureCount];
-        usersPerHeightmap = new int[textureCount];
+        usersPerTexture = new int[textureCount];
 
         RenderTextureDescriptor d = new RenderTextureDescriptor(targetSize, targetSize, RenderTextureFormat.RHalf);
-        d.useMipMap = true;
+        d.useMipMap = useMipmaps;
         d.autoGenerateMips = false;
         d.mipCount = 8;
         d.dimension = TextureDimension.Tex3D;
@@ -89,6 +112,8 @@ public class SDFTextureCollection : ScriptableObject
         sdfArray.filterMode = FilterMode.Trilinear;
         sdfArray.Create();
         sdfArray.name = this.name;
+
+        Debug.Log("Created SDF Array: " + sdfArray.name);
     }
 
     private int GetNextFreeIndex(){
@@ -101,11 +126,15 @@ public class SDFTextureCollection : ScriptableObject
     }
 
     public Vector4 IndexToOrigin(int index){
-        //4 * 4 * 4 cube
-        int column = index % 4; //every time we increment
-        int row = Mathf.FloorToInt((float)index / 4) % 4; //every time we finish a columm
-        int depth = Mathf.FloorToInt((float)index / (4*4)); //every time we finish a sheet
-        return new Vector4(column, row, depth, 4.0f) * (1.0f/4.0f);
+        int column = index % (int)numberOfSDFPerDimension; //every time we increment
+        int row = Mathf.FloorToInt((float)index / (int)numberOfSDFPerDimension) % (int)numberOfSDFPerDimension; //every time we finish a columm
+        int depth = Mathf.FloorToInt((float)index / ((int)numberOfSDFPerDimension * (int)numberOfSDFPerDimension)); //every time we finish a sheet
+        return new Vector4(column, row, depth, (int)numberOfSDFPerDimension) * (1.0f/ (int)numberOfSDFPerDimension);
+    }
+
+    public Texture3D GetTexture(int index)
+    {
+        return sdfTextures[index];
     }
 
     public int RegisterTexture(Texture3D texture){
@@ -128,26 +157,45 @@ public class SDFTextureCollection : ScriptableObject
             sdfTextures[texIndex] = texture;
             blitShader.SetTexture(0, "_Result", sdfArray);
             blitShader.SetTexture(0, "_Source", texture);
-            blitShader.SetVector("_Origin", IndexToOrigin(texIndex) * 512);
+            blitShader.SetVector("_Scale", Vector3.one * ((float)texture.width / (float)resolutionPerSDF));
+            blitShader.SetVector("_Origin", IndexToOrigin(texIndex) * GetTextureSize());
             //Debug.Log(IndexToOrigin(texIndex));
-            blitShader.Dispatch(0, texture.width / 8, texture.height / 8, texture.depth / 8);
-            sdfArray.GenerateMips();
-            usersPerHeightmap[texIndex]++;
+            blitShader.Dispatch(0, (int)resolutionPerSDF, (int)resolutionPerSDF, (int)resolutionPerSDF);
+            if (sdfArray.useMipMap)
+            {
+                sdfArray.GenerateMips();
+            }
+            usersPerTexture[texIndex]++;
+            Debug.LogWarning("Registered " + texture.name);
             return texIndex;
         } else {
+            Debug.LogWarning("Re-using " + texture.name);
             texIndex = Array.IndexOf(sdfTextures, texture);
-            usersPerHeightmap[texIndex]++;
+            usersPerTexture[texIndex]++;
             return texIndex;
         }
+    }
+    [ContextMenu("Regenerate")]
+    public void Regenerate()
+    {
+        Dispose();
+        Init();
+        OnRegenerate.Invoke();
     }
 
     public void UnregisterTexture(Texture3D texture){
         if(sdfTextures.Contains(texture)){
             int index = Array.IndexOf(sdfTextures, texture);
-            usersPerHeightmap[index]--;
-            if(usersPerHeightmap[index] <= 0){
+            usersPerTexture[index]--;
+            if(usersPerTexture[index] <= 0){
                 sdfTextures[index] = null;
             }
         }
+    }
+
+    private void Dispose()
+    {
+        sdfArray.Release();
+        sdfArray = null;
     }
 }

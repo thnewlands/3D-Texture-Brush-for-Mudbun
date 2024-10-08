@@ -13,3 +13,8 @@ MonoBehaviour:
   m_Name: SDFTextureCollection
   m_EditorClassIdentifier: 
   blitShader: {fileID: 7200000, guid: 449722b7209802947921cd957aaf7ec9, type: 3}
+  OnRegenerate:
+    m_PersistentCalls:
+      m_Calls: []
+  resolutionPerSDF: 128
+  numberOfSDFPerDimension: 3

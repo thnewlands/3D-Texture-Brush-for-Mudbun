@@ -4,9 +4,10 @@
 RWTexture3D<float> _Result;
 Texture3D<float> _Source;
 float3 _Origin;
+float3 _Scale;
 
 [numthreads(8,8,8)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    _Result[id.xyz + _Origin] = _Source[id.xyz];//Largest texture takes smallest texture and translates it into a position
+    _Result[id.xyz + _Origin] = _Source[(float3) id.xyz * _Scale.xyz];
 }
