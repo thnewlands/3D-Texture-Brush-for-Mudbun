@@ -45,7 +45,7 @@ float sdf_texture3D_brush(SdfBrush brush, float3 pRel)
     float3 localPosition = pRel.xyz / scale.xyz;
             
     float3 clampedPosition = clamp(localPosition, -.5, .5); //pRel / scale in range -.5, .5
-    float3 textureSpacePosition = ((localPosition + .5) / _MudbunSDFTexturesPerDimension) + origin; //position within 3D Texture
+    float3 textureSpacePosition = ((clampedPosition + .5) / _MudbunSDFTexturesPerDimension) + origin; //position within 3D Texture
     float3 gradient = sample_sdf_tex3D_gradient(textureSpacePosition, boundsMin, boundsMax, sampleRadius);
     float dist = sample_sdf_tex3D_distance(textureSpacePosition, boundsMin, boundsMax);
 
