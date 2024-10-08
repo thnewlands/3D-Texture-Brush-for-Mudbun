@@ -14,7 +14,6 @@ public class SDFTextureCollection : ScriptableObject
     private int[] usersPerTexture;
 
     public ComputeShader blitShader;
-    public UnityEvent OnRegenerate;
 
     private RenderTexture sdfArray;
     private const string textureName = "_MudbunSDFTextures";
@@ -56,6 +55,15 @@ public class SDFTextureCollection : ScriptableObject
 
     public void Init(){
         RegisterShader();
+
+        for (int i = 0; i < sdfTextures.Length; i++)
+        {
+            Texture3D texture = sdfTextures[i];
+            if(texture != null)
+            {
+                PaintTexture(sdfTextures[i], i);
+            }
+        }
     }
     private void RegisterShader(){
         if(sdfArray == null){
@@ -96,8 +104,14 @@ public class SDFTextureCollection : ScriptableObject
         int targetSize = GetTextureSize();
         int textureCount = (int)numberOfSDFPerDimension * (int)numberOfSDFPerDimension * (int)numberOfSDFPerDimension;
 
-        sdfTextures = new Texture3D[textureCount];
-        usersPerTexture = new int[textureCount];
+        if(sdfTextures == null)
+        {
+            sdfTextures = new Texture3D[textureCount];
+        }
+        if(usersPerTexture == null)
+        {
+            usersPerTexture = new int[textureCount];
+        }
 
         RenderTextureDescriptor d = new RenderTextureDescriptor(targetSize, targetSize, RenderTextureFormat.RHalf);
         d.useMipMap = useMipmaps;
@@ -137,6 +151,23 @@ public class SDFTextureCollection : ScriptableObject
         return sdfTextures[index];
     }
 
+
+    private void PaintTexture(Texture3D texture, int index)
+    {
+        blitShader.SetTexture(0, "_Result", sdfArray);
+        blitShader.SetTexture(0, "_Source", texture);
+        blitShader.SetVector("_Scale", Vector3.one * ((float)texture.width / (float)resolutionPerSDF));
+        blitShader.SetVector("_Origin", IndexToOrigin(index) * GetTextureSize());
+        //Debug.Log(IndexToOrigin(texIndex));
+        blitShader.Dispatch(0, (int)resolutionPerSDF, (int)resolutionPerSDF, (int)resolutionPerSDF);
+        if (sdfArray.useMipMap)
+        {
+            sdfArray.GenerateMips();
+        }
+    }
+
+    
+
     public int RegisterTexture(Texture3D texture){
         RegisterShader();
 
@@ -154,17 +185,8 @@ public class SDFTextureCollection : ScriptableObject
                 Debug.LogWarning("Too many textures in " + this.name);
                 return -1;
             }
+            PaintTexture(texture, texIndex);
             sdfTextures[texIndex] = texture;
-            blitShader.SetTexture(0, "_Result", sdfArray);
-            blitShader.SetTexture(0, "_Source", texture);
-            blitShader.SetVector("_Scale", Vector3.one * ((float)texture.width / (float)resolutionPerSDF));
-            blitShader.SetVector("_Origin", IndexToOrigin(texIndex) * GetTextureSize());
-            //Debug.Log(IndexToOrigin(texIndex));
-            blitShader.Dispatch(0, (int)resolutionPerSDF, (int)resolutionPerSDF, (int)resolutionPerSDF);
-            if (sdfArray.useMipMap)
-            {
-                sdfArray.GenerateMips();
-            }
             usersPerTexture[texIndex]++;
             Debug.LogWarning("Registered " + texture.name);
             return texIndex;
@@ -178,9 +200,12 @@ public class SDFTextureCollection : ScriptableObject
     [ContextMenu("Regenerate")]
     public void Regenerate()
     {
+        Texture3D[] cachedTextures = sdfTextures;
+        int[] cachedUserCounts = usersPerTexture;
         Dispose();
+        sdfTextures = cachedTextures;
+        usersPerTexture = cachedUserCounts;
         Init();
-        OnRegenerate.Invoke();
     }
 
     public void UnregisterTexture(Texture3D texture){
@@ -197,5 +222,7 @@ public class SDFTextureCollection : ScriptableObject
     {
         sdfArray.Release();
         sdfArray = null;
+        sdfTextures = null;
+        usersPerTexture = null;
     }
 }

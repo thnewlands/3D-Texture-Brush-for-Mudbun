@@ -37,7 +37,6 @@ namespace MudBun
         public float Offset { get => m_offset; set { m_offset = value; MarkDirty(); } }
 
         private void Start(){
-            SDFTextureCollection.Instance.OnRegenerate.AddListener(() => RemindTexture());
             TryUpdateTexture();
         }
 
@@ -61,11 +60,6 @@ namespace MudBun
             if(lastSDFTexture != sdfTexture){
                 TryUpdateTexture();
             }
-        }
-
-        private void RemindTexture()
-        {
-            index = collection.RegisterTexture(sdfTexture);
         }
 
         private void TryUpdateTexture(){
@@ -127,8 +121,6 @@ namespace MudBun
             GizmosUtil.DrawWireBox(PointRs(transform.position), transform.localScale, RotationRs(transform.rotation));
         }
         private void OnDestroy(){
-            SDFTextureCollection.Instance.OnRegenerate.RemoveListener(() => RemindTexture());
-
             collection.UnregisterTexture(sdfTexture);
         }
     }
